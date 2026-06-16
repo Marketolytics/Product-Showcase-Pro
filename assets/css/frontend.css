@@ -1,0 +1,440 @@
+/**
+ * STC Product Showcase Pro – front-end styles.
+ */
+
+/* ---------- Grid & wrapper ---------- */
+.stc-psp-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 24px;
+}
+
+.stc-psp-empty {
+	padding: 24px;
+	text-align: center;
+	color: #777;
+}
+
+/* ---------- Base card ---------- */
+.stc-psp-card {
+	display: flex;
+	flex-direction: row;
+	overflow: hidden;
+	background: #fff;
+	border: 1px solid #e6e6e6;
+	border-radius: 10px;
+	box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+	transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.stc-psp-card:hover {
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stc-psp-card-media {
+	position: relative;
+	flex: 0 0 40%;
+	max-width: 40%;
+	overflow: hidden;
+	background: #f6f7f9;
+}
+
+.stc-psp-card-media a,
+.stc-psp-card-media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.stc-psp-card-media img {
+	transition: transform 0.4s ease;
+}
+
+.stc-psp-card-body {
+	flex: 1;
+	padding: 22px 26px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* ---------- Aspect ratios ---------- */
+.stc-psp-ratio-1-1 img { aspect-ratio: 1 / 1; }
+.stc-psp-ratio-4-3 img { aspect-ratio: 4 / 3; }
+.stc-psp-ratio-16-9 img { aspect-ratio: 16 / 9; }
+.stc-psp-ratio-auto img { aspect-ratio: auto; }
+
+/* ---------- Object fit ---------- */
+.stc-psp-fit-cover img { object-fit: cover; }
+.stc-psp-fit-contain img { object-fit: contain; }
+
+/* ---------- Image hover effects ---------- */
+.stc-psp-hover-zoom:hover img { transform: scale(1.08); }
+.stc-psp-hover-scale:hover img { transform: scale(1.15); }
+.stc-psp-hover-rotate:hover img { transform: rotate(3deg) scale(1.08); }
+.stc-psp-hover-none:hover img { transform: none; }
+
+/* ---------- Text elements ---------- */
+.stc-psp-brand {
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #0b5cab;
+	font-weight: 700;
+}
+
+.stc-psp-category {
+	font-size: 12px;
+	color: #888;
+}
+
+.stc-psp-title {
+	margin: 2px 0;
+	font-size: 20px;
+	line-height: 1.3;
+}
+
+.stc-psp-title a {
+	color: #1a1a1a;
+	text-decoration: none;
+}
+
+.stc-psp-title a:hover { color: #0b5cab; }
+
+.stc-psp-sku {
+	font-size: 13px;
+	color: #666;
+}
+
+.stc-psp-sku span { font-weight: 600; }
+
+.stc-psp-desc {
+	font-size: 14px;
+	color: #555;
+	line-height: 1.6;
+}
+
+.stc-psp-readmore {
+	background: none;
+	border: none;
+	color: #0b5cab;
+	cursor: pointer;
+	font-weight: 600;
+	padding: 0;
+	font-size: 13px;
+}
+
+/* ---------- Features ---------- */
+.stc-psp-features {
+	list-style: none;
+	margin: 6px 0;
+	padding: 0;
+	display: grid;
+	gap: 4px;
+}
+
+.stc-psp-features li {
+	position: relative;
+	padding-left: 22px;
+	font-size: 13px;
+	color: #444;
+}
+
+.stc-psp-features-bullet li::before { content: "•"; position: absolute; left: 6px; color: #0b5cab; }
+.stc-psp-features-checkmark li::before { content: "\2713"; position: absolute; left: 2px; color: #1a9d5a; font-weight: 700; }
+.stc-psp-features-icon li { padding-left: 0; display: flex; align-items: center; gap: 6px; }
+.stc-psp-features-icon li i { color: #0b5cab; }
+
+/* ---------- Tags ---------- */
+.stc-psp-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.stc-psp-tag { background: #eef3f9; color: #41566e; font-size: 11px; padding: 3px 9px; border-radius: 20px; }
+
+/* ---------- Stock badge ---------- */
+.stc-psp-stock {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	font-size: 11px;
+	font-weight: 700;
+	padding: 4px 10px;
+	border-radius: 4px;
+	color: #fff;
+}
+.stc-psp-stock-in { background: #1a9d5a; }
+.stc-psp-stock-out { background: #c0392b; }
+
+/* ---------- Rating ---------- */
+.stc-psp-rating .star-rating { font-size: 14px; }
+
+/* ---------- Footer / price / actions ---------- */
+.stc-psp-card-footer {
+	margin-top: auto;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding-top: 12px;
+}
+
+.stc-psp-price { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+.stc-psp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ---------- Buttons ---------- */
+.stc-psp-btn,
+.stc-psp-enquire-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	border: none;
+	border-radius: 6px;
+	padding: 10px 18px;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	line-height: 1;
+	background: #0b5cab;
+	color: #fff;
+	transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stc-psp-btn:hover,
+.stc-psp-enquire-btn:hover { background: #08407a; color: #fff; }
+
+.stc-psp-btn-download { background: #2c3e50; }
+.stc-psp-btn-download:hover { background: #1c2c39; }
+
+.stc-psp-btn .stc-psp-btn-icon,
+.stc-psp-enquire-btn .stc-psp-btn-icon { font-size: 16px; width: 16px; height: 16px; }
+
+.stc-psp-file-size { font-size: 11px; opacity: 0.8; font-weight: 400; }
+.stc-psp-dl-count {
+	background: rgba(255, 255, 255, 0.25);
+	border-radius: 20px;
+	padding: 1px 8px;
+	font-size: 11px;
+}
+
+/* ---------- Button animations ---------- */
+.stc-psp-anim-fade:hover { opacity: 0.85; }
+.stc-psp-anim-scale:hover { transform: scale(1.06); }
+.stc-psp-anim-slide:hover { transform: translateX(4px); }
+.stc-psp-anim-pulse:hover { animation: stcPspPulse 0.8s infinite; }
+.stc-psp-anim-bounce:hover { animation: stcPspBounce 0.7s; }
+
+@keyframes stcPspPulse {
+	0% { box-shadow: 0 0 0 0 rgba(11, 92, 171, 0.5); }
+	70% { box-shadow: 0 0 0 10px rgba(11, 92, 171, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(11, 92, 171, 0); }
+}
+
+@keyframes stcPspBounce {
+	0%, 100% { transform: translateY(0); }
+	30% { transform: translateY(-6px); }
+	60% { transform: translateY(-3px); }
+}
+
+/* ===========================================================
+ * LAYOUT VARIANTS
+ * =========================================================== */
+
+/* Layout 2 – image right */
+.stc-psp-layout-2 { flex-direction: row-reverse; }
+
+/* Layout 3 – compact horizontal */
+.stc-psp-layout-3 .stc-psp-card-media { flex-basis: 28%; max-width: 28%; }
+.stc-psp-layout-3 .stc-psp-card-body { padding: 14px 18px; gap: 5px; }
+.stc-psp-layout-3 .stc-psp-title { font-size: 16px; }
+.stc-psp-layout-3 .stc-psp-features,
+.stc-psp-layout-3 .stc-psp-tags { display: none; }
+
+/* Layout 4 – industrial premium */
+.stc-psp-layout-4 {
+	border: none;
+	border-left: 5px solid #0b5cab;
+	border-radius: 4px;
+	background: linear-gradient(135deg, #ffffff 0%, #f4f7fb 100%);
+}
+.stc-psp-layout-4 .stc-psp-title { font-size: 22px; font-weight: 800; }
+.stc-psp-layout-4 .stc-psp-brand { color: #c0392b; }
+
+/* Layout 5 – Thermax style */
+.stc-psp-layout-5 {
+	border-radius: 0;
+	border: 1px solid #d9dee5;
+	box-shadow: none;
+}
+.stc-psp-layout-5 .stc-psp-card-media { flex-basis: 45%; max-width: 45%; }
+.stc-psp-layout-5 .stc-psp-card-body { background: #fafbfc; }
+.stc-psp-layout-5 .stc-psp-title { color: #00538a; text-transform: capitalize; }
+.stc-psp-layout-5 .stc-psp-btn { border-radius: 2px; }
+
+/* Layout 6 – UKL style */
+.stc-psp-layout-6 {
+	background: #1f2733;
+	border-color: #1f2733;
+}
+.stc-psp-layout-6 .stc-psp-title a,
+.stc-psp-layout-6 .stc-psp-desc,
+.stc-psp-layout-6 .stc-psp-sku,
+.stc-psp-layout-6 .stc-psp-features li,
+.stc-psp-layout-6 .stc-psp-price { color: #e8edf3; }
+.stc-psp-layout-6 .stc-psp-category { color: #9fb0c4; }
+.stc-psp-layout-6 .stc-psp-btn { background: #f39c12; color: #1f2733; }
+.stc-psp-layout-6 .stc-psp-btn:hover { background: #d98a0b; }
+
+/* Layout 7 – minimal */
+.stc-psp-layout-7 {
+	border: none;
+	box-shadow: none;
+	background: transparent;
+}
+.stc-psp-layout-7 .stc-psp-card-body { padding: 16px 18px 16px 0; }
+.stc-psp-layout-7 .stc-psp-features,
+.stc-psp-layout-7 .stc-psp-tags,
+.stc-psp-layout-7 .stc-psp-stock { display: none; }
+
+/* Layout 8 – custom builder (inherits base, fully style-controlled in Elementor) */
+.stc-psp-layout-8 { border-style: dashed; }
+
+/* ===========================================================
+ * PAGINATION / LOAD MORE
+ * =========================================================== */
+.stc-psp-pagination ul { list-style: none; display: flex; gap: 6px; padding: 24px 0 0; justify-content: center; }
+.stc-psp-pagination a,
+.stc-psp-pagination span {
+	display: inline-block;
+	padding: 8px 13px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	text-decoration: none;
+	color: #333;
+}
+.stc-psp-pagination .current { background: #0b5cab; color: #fff; border-color: #0b5cab; }
+
+.stc-psp-loadmore-wrap { text-align: center; padding: 28px 0 0; }
+.stc-psp-loadmore { min-width: 160px; justify-content: center; }
+.stc-psp-spinner {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	margin-left: 8px;
+	border: 3px solid rgba(11, 92, 171, 0.25);
+	border-top-color: #0b5cab;
+	border-radius: 50%;
+	animation: stcPspSpin 0.8s linear infinite;
+	vertical-align: middle;
+}
+@keyframes stcPspSpin { to { transform: rotate(360deg); } }
+
+/* ===========================================================
+ * POPUP
+ * =========================================================== */
+.stc-psp-popup-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 99999;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(15, 23, 35, 0.65);
+	padding: 20px;
+}
+.stc-psp-popup-overlay.is-open { display: flex; }
+
+.stc-psp-popup {
+	position: relative;
+	width: 100%;
+	max-width: 520px;
+	max-height: 90vh;
+	overflow-y: auto;
+	background: #fff;
+	border-radius: 12px;
+	padding: 30px;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+	animation: stcPspPop 0.25s ease;
+}
+@keyframes stcPspPop { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.stc-psp-popup-close {
+	position: absolute;
+	top: 12px;
+	right: 16px;
+	background: none;
+	border: none;
+	font-size: 28px;
+	line-height: 1;
+	cursor: pointer;
+	color: #888;
+}
+.stc-psp-popup-close:hover { color: #c0392b; }
+
+.stc-psp-popup-title { margin: 0 0 6px; font-size: 22px; }
+.stc-psp-popup-product {
+	font-size: 14px;
+	color: #0b5cab;
+	font-weight: 600;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #eee;
+}
+
+.stc-psp-enquiry-form .stc-psp-field { margin-bottom: 14px; }
+.stc-psp-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #333; }
+.stc-psp-req { color: #c0392b; }
+.stc-psp-enquiry-form input[type="text"],
+.stc-psp-enquiry-form input[type="email"],
+.stc-psp-enquiry-form input[type="tel"],
+.stc-psp-enquiry-form input[type="date"],
+.stc-psp-enquiry-form input[type="file"],
+.stc-psp-enquiry-form select,
+.stc-psp-enquiry-form textarea {
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid #d4d9e0;
+	border-radius: 6px;
+	font-size: 14px;
+	box-sizing: border-box;
+}
+.stc-psp-enquiry-form .stc-psp-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.stc-psp-enquiry-form .stc-psp-opt { font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
+
+.stc-psp-submit-btn {
+	width: 100%;
+	padding: 13px;
+	background: #0b5cab;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+.stc-psp-submit-btn:hover { background: #08407a; }
+.stc-psp-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.stc-psp-form-message { margin-top: 14px; font-size: 14px; }
+.stc-psp-form-message.is-success { color: #1a9d5a; font-weight: 600; }
+.stc-psp-form-message.is-error { color: #c0392b; font-weight: 600; }
+
+/* ===========================================================
+ * RESPONSIVE
+ * =========================================================== */
+@media (max-width: 1024px) {
+	.stc-psp-card-media { flex-basis: 42%; max-width: 42%; }
+}
+
+@media (max-width: 767px) {
+	.stc-psp-card,
+	.stc-psp-layout-2 { flex-direction: column; }
+	.stc-psp-card-media,
+	.stc-psp-layout-3 .stc-psp-card-media,
+	.stc-psp-layout-5 .stc-psp-card-media { flex-basis: auto; max-width: 100%; }
+	.stc-psp-card-body { padding: 18px; }
+	.stc-psp-card-footer { flex-direction: column; align-items: stretch; }
+	.stc-psp-actions { width: 100%; }
+	.stc-psp-actions .stc-psp-btn { flex: 1; justify-content: center; }
+	.stc-psp-popup { padding: 22px; }
+}

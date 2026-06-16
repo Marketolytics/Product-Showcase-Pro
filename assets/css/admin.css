@@ -1,0 +1,47 @@
+/**
+ * STC Product Showcase Pro – admin styles.
+ */
+
+.stc-psp-admin .stc-psp-status {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: #fff;
+}
+.stc-psp-status-new { background: #0b5cab; }
+.stc-psp-status-read { background: #6c7a89; }
+.stc-psp-status-replied { background: #1a9d5a; }
+.stc-psp-status-closed { background: #34404d; }
+
+/* Settings tabs */
+.stc-psp-tab-panel { padding-top: 10px; }
+
+/* Form builder */
+.stc-psp-form-builder { max-width: 980px; }
+.stc-psp-fb-list { margin-bottom: 12px; }
+.stc-psp-fb-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 8px 10px;
+	margin-bottom: 8px;
+}
+.stc-psp-fb-handle { cursor: move; color: #8a8a8a; }
+.stc-psp-fb-row input[type="text"] { flex: 1 1 auto; min-width: 80px; }
+.stc-psp-fb-row .stc-psp-fb-key { max-width: 120px; }
+.stc-psp-fb-row .stc-psp-fb-options { max-width: 140px; }
+.stc-psp-fb-row select { max-width: 130px; }
+.stc-psp-fb-row label { white-space: nowrap; font-size: 12px; }
+.stc-psp-fb-remove { color: #c0392b; }
+.stc-psp-fb-row.ui-sortable-helper { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+
+.stc-psp-export { width: 100%; font-size: 11px; }
+
+/* PDF meta box buttons spacing */
+#stc_psp_catalogue .button { margin-right: 6px; }
