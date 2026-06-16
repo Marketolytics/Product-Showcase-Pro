@@ -100,6 +100,24 @@ class STC_PSP_Enquiry_System {
 		$class = $args['class'] ?? '';
 		$icon  = $args['icon'] ?? 'dashicons dashicons-email-alt';
 
+		// Icon controls.
+		$icon_enabled  = ! array_key_exists( 'icon_enabled', $args ) || ! empty( $args['icon_enabled'] );
+		$icon_position = ( ( $args['icon_position'] ?? 'left' ) === 'right' ) ? 'right' : 'left';
+		$icon_size     = isset( $args['icon_size'] ) && '' !== $args['icon_size'] ? (int) $args['icon_size'] : 0;
+		$icon_color    = isset( $args['icon_color'] ) ? (string) $args['icon_color'] : '';
+
+		if ( 'right' === $icon_position ) {
+			$class .= ' stc-psp-icon-right';
+		}
+
+		$icon_style = '';
+		if ( $icon_size > 0 ) {
+			$icon_style .= 'font-size:' . $icon_size . 'px;width:' . $icon_size . 'px;height:' . $icon_size . 'px;';
+		}
+		if ( '' !== $icon_color ) {
+			$icon_style .= 'color:' . $icon_color . ';';
+		}
+
 		ob_start();
 		?>
 		<button type="button"
@@ -109,8 +127,8 @@ class STC_PSP_Enquiry_System {
 			data-product-sku="<?php echo esc_attr( $payload['product_sku'] ); ?>"
 			data-product-category="<?php echo esc_attr( $payload['product_category'] ); ?>"
 			data-product-url="<?php echo esc_url( $payload['product_url'] ); ?>">
-			<?php if ( $icon ) : ?>
-				<i class="stc-psp-btn-icon <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></i>
+			<?php if ( $icon_enabled && $icon ) : ?>
+				<i class="stc-psp-btn-icon <?php echo esc_attr( $icon ); ?>" style="<?php echo esc_attr( $icon_style ); ?>" aria-hidden="true"></i>
 			<?php endif; ?>
 			<span class="stc-psp-btn-text"><?php echo esc_html( $text ); ?></span>
 		</button>

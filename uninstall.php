@@ -50,6 +50,7 @@ if ( $purge_data ) {
 		'_stc_psp_applications',
 		'_stc_psp_industries',
 		'_stc_psp_downloads',
+		'_stc_psp_downloads_files',
 		'_stc_psp_certificates',
 		'_stc_psp_approvals',
 		'_stc_psp_download_count',

@@ -3,7 +3,7 @@
  * Plugin Name:       STC Product Showcase Pro
  * Plugin URI:        https://example.com/stc-product-showcase-pro
  * Description:       Premium WooCommerce + Elementor horizontal product showcase with enquiry system, PDF catalogue downloads, drag-and-drop form/popup builder, download tracking and an admin dashboard.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            STC
  * Author URI:        https://example.com
  * Text Domain:       stc-product-showcase-pro
@@ -27,7 +27,7 @@ if ( defined( 'STC_PSP_VERSION' ) ) {
 /* -------------------------------------------------------------------------
  * Constants
  * ---------------------------------------------------------------------- */
-define( 'STC_PSP_VERSION', '1.0.0' );
+define( 'STC_PSP_VERSION', '1.1.0' );
 define( 'STC_PSP_DB_VERSION', '1.0.0' );
 define( 'STC_PSP_FILE', __FILE__ );
 define( 'STC_PSP_BASENAME', plugin_basename( __FILE__ ) );
