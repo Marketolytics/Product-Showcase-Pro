@@ -79,7 +79,8 @@ class STC_PSP_Ajax_Products {
 			'image_hover', 'desc_limit_type', 'features_source', 'features_meta_key',
 			'features_style', 'features_icon', 'enquiry_button_text', 'enquiry_icon',
 			'enquiry_anim', 'download_button_text', 'download_anim', 'read_more_text',
-			'read_less_text', 'skus',
+			'read_less_text', 'skus', 'enquiry_icon_position', 'enquiry_icon_color',
+			'download_fallback_text',
 		);
 		foreach ( $scalar as $key ) {
 			if ( isset( $decoded[ $key ] ) && is_scalar( $decoded[ $key ] ) ) {
@@ -94,12 +95,23 @@ class STC_PSP_Ajax_Products {
 			}
 		}
 
+		// Slider value (icon size) may arrive as {size,unit} or a number.
+		if ( isset( $decoded['enquiry_icon_size'] ) ) {
+			$size = $decoded['enquiry_icon_size'];
+			if ( is_array( $size ) ) {
+				$clean['enquiry_icon_size'] = array( 'size' => absint( $size['size'] ?? 0 ), 'unit' => 'px' );
+			} else {
+				$clean['enquiry_icon_size'] = absint( $size );
+			}
+		}
+
 		// yes/no switches.
 		$switches = array(
 			'hide_out_of_stock', 'show_image', 'show_name', 'show_sku', 'show_brand',
-			'show_category', 'show_description', 'show_features', 'show_price',
-			'show_rating', 'show_tags', 'show_stock', 'enable_read_more',
-			'enable_enquiry_btn', 'enable_download_btn',
+			'show_category', 'show_description', 'show_features', 'show_applications',
+			'show_downloads', 'show_price', 'show_rating', 'show_tags', 'show_stock',
+			'enable_read_more', 'enable_enquiry_btn', 'enable_download_btn',
+			'enquiry_icon_enable', 'download_fallback', 'enable_custom_order',
 		);
 		foreach ( $switches as $key ) {
 			if ( isset( $decoded[ $key ] ) ) {
@@ -113,6 +125,17 @@ class STC_PSP_Ajax_Products {
 				$value         = is_array( $decoded[ $key ] ) ? $decoded[ $key ] : explode( ',', (string) $decoded[ $key ] );
 				$clean[ $key ] = array_values( array_filter( array_map( 'absint', $value ) ) );
 			}
+		}
+
+		// Element order repeater: list of { element: key }.
+		if ( isset( $decoded['element_order'] ) && is_array( $decoded['element_order'] ) ) {
+			$order = array();
+			foreach ( $decoded['element_order'] as $row ) {
+				if ( is_array( $row ) && isset( $row['element'] ) ) {
+					$order[] = array( 'element' => sanitize_key( (string) $row['element'] ) );
+				}
+			}
+			$clean['element_order'] = $order;
 		}
 
 		return $clean;

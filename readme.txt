@@ -4,7 +4,7 @@ Tags: woocommerce, elementor, product showcase, enquiry, catalogue, industrial, 
 Requires at least: 6.8
 Tested up to: 6.8
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,17 @@ Features:
 4. Edit a page with Elementor and drop in the "STC Product Showcase" widget.
 
 == Changelog ==
+
+= 1.1.0 =
+* Fixed: Popup close button is now a circular 40x40 button in the top-right (20px offset), with hover effect; sticky and always visible on mobile.
+* Fixed: Enquire button icon alignment using flexbox; added icon enable, position (left/right), size and colour controls.
+* Fixed: Download Catalogue button now auto-shows when a catalogue exists and auto-hides when missing, with an optional "No catalogue available" fallback message.
+* New: Per-product multiple downloads (Catalogue, Datasheet, Technical Specifications, Brochure, Certificate) via a repeater meta box — unlimited files.
+* New: Elementor "Manual Products" repeater — add unlimited products in one widget, each with custom title, description, features and catalogue PDF.
+* New: Drag-and-drop element ordering control for the card content.
+* New: Applications and Downloads element toggles.
+* New: Download analytics — Top Downloaded Products, Top Downloaded Catalogues, and CSV export on the Downloads page.
+* Improved: Mobile layout — Enquire / Download buttons stack full width with no overlap or horizontal scroll.
 
 = 1.0.0 =
 * Initial release.

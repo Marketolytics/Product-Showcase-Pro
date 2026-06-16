@@ -120,4 +120,39 @@ class STC_PSP_Download_Repository {
 
 		return $rows ?: array();
 	}
+
+	/**
+	 * Aggregate top downloaded catalogue files (by file name).
+	 *
+	 * @param int $limit Number of rows.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function top_files( int $limit = 10 ): array {
+		global $wpdb;
+		$table = STC_PSP_Database::downloads_table();
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT file_name, product_name, COUNT(*) AS total FROM {$table} WHERE file_name <> '' GROUP BY file_name, product_name ORDER BY total DESC LIMIT %d", // phpcs:ignore WordPress.DB
+				$limit
+			),
+			ARRAY_A
+		);
+
+		return $rows ?: array();
+	}
+
+	/**
+	 * Fetch all download rows (used for CSV export).
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function all(): array {
+		global $wpdb;
+		$table = STC_PSP_Database::downloads_table();
+
+		$rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY created_at DESC", ARRAY_A ); // phpcs:ignore WordPress.DB
+
+		return $rows ?: array();
+	}
 }

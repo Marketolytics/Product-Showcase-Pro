@@ -9,6 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Elementor\Widget_Base;
 use Elementor\Controls_Manager;
+use Elementor\Repeater;
 use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Background;
 use Elementor\Group_Control_Border;
@@ -80,13 +81,168 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 	 * Register all controls.
 	 */
 	protected function register_controls(): void {
+		$this->register_content_mode_control();
+		$this->register_repeater_controls();
 		$this->register_query_controls();
 		$this->register_layout_controls();
 		$this->register_elements_controls();
+		$this->register_order_controls();
 		$this->register_description_controls();
 		$this->register_features_controls();
 		$this->register_buttons_controls();
 		$this->register_style_controls();
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * CONTENT MODE (query vs manual repeater)
+	 * ------------------------------------------------------------------ */
+	private function register_content_mode_control(): void {
+		$this->start_controls_section(
+			'section_content_mode',
+			array( 'label' => __( 'Content', 'stc-product-showcase-pro' ) )
+		);
+
+		$this->add_control(
+			'content_mode',
+			array(
+				'label'       => __( 'Content Mode', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => 'query',
+				'options'     => array(
+					'query'    => __( 'Automatic Query', 'stc-product-showcase-pro' ),
+					'repeater' => __( 'Manual Products (Repeater)', 'stc-product-showcase-pro' ),
+				),
+				'description' => __( 'Use "Manual Products" to add an unlimited list of products with per-item title, description, features and catalogue PDF.', 'stc-product-showcase-pro' ),
+			)
+		);
+
+		$this->end_controls_section();
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * PRODUCTS REPEATER (manual, unlimited)
+	 * ------------------------------------------------------------------ */
+	private function register_repeater_controls(): void {
+		$this->start_controls_section(
+			'section_products_repeater',
+			array(
+				'label'     => __( 'Products', 'stc-product-showcase-pro' ),
+				'condition' => array( 'content_mode' => 'repeater' ),
+			)
+		);
+
+		$repeater = new Repeater();
+
+		$repeater->add_control(
+			'rep_product_id',
+			array(
+				'label'       => __( 'Product', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::SELECT2,
+				'options'     => $this->get_product_options(),
+				'label_block' => true,
+			)
+		);
+
+		$repeater->add_control(
+			'rep_title',
+			array(
+				'label'       => __( 'Custom Title', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::TEXT,
+				'label_block' => true,
+				'description' => __( 'Leave blank to use the product name.', 'stc-product-showcase-pro' ),
+			)
+		);
+
+		$repeater->add_control(
+			'rep_description',
+			array(
+				'label'       => __( 'Custom Description', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::TEXTAREA,
+				'label_block' => true,
+			)
+		);
+
+		$repeater->add_control(
+			'rep_features',
+			array(
+				'label'       => __( 'Custom Features (one per line)', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::TEXTAREA,
+				'label_block' => true,
+			)
+		);
+
+		$repeater->add_control(
+			'rep_pdf',
+			array(
+				'label'      => __( 'Catalogue PDF', 'stc-product-showcase-pro' ),
+				'type'       => Controls_Manager::MEDIA,
+				'media_types' => array( 'application/pdf' ),
+				'description' => __( 'Overrides the product catalogue PDF for this item.', 'stc-product-showcase-pro' ),
+			)
+		);
+
+		$this->add_control(
+			'products',
+			array(
+				'label'       => __( 'Products', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::REPEATER,
+				'fields'      => $repeater->get_controls(),
+				'title_field' => '{{{ rep_title }}}',
+				'prevent_empty' => false,
+			)
+		);
+
+		$this->end_controls_section();
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * ELEMENT ORDER (drag & drop)
+	 * ------------------------------------------------------------------ */
+	private function register_order_controls(): void {
+		$this->start_controls_section(
+			'section_order',
+			array( 'label' => __( 'Layout Order', 'stc-product-showcase-pro' ) )
+		);
+
+		$this->add_control(
+			'enable_custom_order',
+			array(
+				'label'        => __( 'Custom Element Order', 'stc-product-showcase-pro' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => '',
+				'description'  => __( 'Drag the rows below to decide the order of the card content.', 'stc-product-showcase-pro' ),
+			)
+		);
+
+		$repeater = new Repeater();
+		$repeater->add_control(
+			'element',
+			array(
+				'label'   => __( 'Element', 'stc-product-showcase-pro' ),
+				'type'    => Controls_Manager::SELECT,
+				'options' => STC_PSP_Renderer::element_labels(),
+			)
+		);
+
+		$defaults = array();
+		foreach ( STC_PSP_Renderer::element_keys() as $key ) {
+			$defaults[] = array( 'element' => $key );
+		}
+
+		$this->add_control(
+			'element_order',
+			array(
+				'label'       => __( 'Order', 'stc-product-showcase-pro' ),
+				'type'        => Controls_Manager::REPEATER,
+				'fields'      => $repeater->get_controls(),
+				'default'     => $defaults,
+				'title_field' => '{{{ element }}}',
+				'condition'   => array( 'enable_custom_order' => 'yes' ),
+			)
+		);
+
+		$this->end_controls_section();
 	}
 
 	/* ------------------------------------------------------------------ *
@@ -95,7 +251,10 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 	private function register_query_controls(): void {
 		$this->start_controls_section(
 			'section_query',
-			array( 'label' => __( 'Product Query', 'stc-product-showcase-pro' ) )
+			array(
+				'label'     => __( 'Product Query', 'stc-product-showcase-pro' ),
+				'condition' => array( 'content_mode' => 'query' ),
+			)
 		);
 
 		$this->add_control(
@@ -404,21 +563,23 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 		);
 
 		$toggles = array(
-			'show_image'       => __( 'Product Image', 'stc-product-showcase-pro' ),
-			'show_name'        => __( 'Product Name', 'stc-product-showcase-pro' ),
-			'show_sku'         => __( 'SKU', 'stc-product-showcase-pro' ),
-			'show_brand'       => __( 'Brand', 'stc-product-showcase-pro' ),
-			'show_category'    => __( 'Category', 'stc-product-showcase-pro' ),
-			'show_description' => __( 'Short Description', 'stc-product-showcase-pro' ),
-			'show_features'    => __( 'Features', 'stc-product-showcase-pro' ),
-			'show_price'       => __( 'Price', 'stc-product-showcase-pro' ),
-			'show_rating'      => __( 'Rating', 'stc-product-showcase-pro' ),
-			'show_tags'        => __( 'Tags', 'stc-product-showcase-pro' ),
-			'show_stock'       => __( 'Stock Status', 'stc-product-showcase-pro' ),
+			'show_image'        => __( 'Product Image', 'stc-product-showcase-pro' ),
+			'show_name'         => __( 'Product Name', 'stc-product-showcase-pro' ),
+			'show_sku'          => __( 'SKU', 'stc-product-showcase-pro' ),
+			'show_brand'        => __( 'Brand', 'stc-product-showcase-pro' ),
+			'show_category'     => __( 'Category', 'stc-product-showcase-pro' ),
+			'show_description'  => __( 'Short Description', 'stc-product-showcase-pro' ),
+			'show_features'     => __( 'Features', 'stc-product-showcase-pro' ),
+			'show_applications' => __( 'Applications', 'stc-product-showcase-pro' ),
+			'show_downloads'    => __( 'Downloads (multiple files)', 'stc-product-showcase-pro' ),
+			'show_price'        => __( 'Price', 'stc-product-showcase-pro' ),
+			'show_rating'       => __( 'Rating', 'stc-product-showcase-pro' ),
+			'show_tags'         => __( 'Tags', 'stc-product-showcase-pro' ),
+			'show_stock'        => __( 'Stock Status', 'stc-product-showcase-pro' ),
 		);
 
 		foreach ( $toggles as $key => $label ) {
-			$default = in_array( $key, array( 'show_sku', 'show_tags', 'show_rating' ), true ) ? '' : 'yes';
+			$default = in_array( $key, array( 'show_sku', 'show_tags', 'show_rating', 'show_applications', 'show_downloads' ), true ) ? '' : 'yes';
 			$this->add_control(
 				$key,
 				array(
@@ -606,6 +767,67 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 		);
 
 		$this->add_control(
+			'enquiry_icon_enable',
+			array(
+				'label'        => __( 'Show Icon', 'stc-product-showcase-pro' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => 'yes',
+				'condition'    => array( 'enable_enquiry_btn' => 'yes' ),
+			)
+		);
+
+		$this->add_control(
+			'enquiry_icon_position',
+			array(
+				'label'     => __( 'Icon Position', 'stc-product-showcase-pro' ),
+				'type'      => Controls_Manager::CHOOSE,
+				'default'   => 'left',
+				'options'   => array(
+					'left'  => array(
+						'title' => __( 'Left', 'stc-product-showcase-pro' ),
+						'icon'  => 'eicon-h-align-left',
+					),
+					'right' => array(
+						'title' => __( 'Right', 'stc-product-showcase-pro' ),
+						'icon'  => 'eicon-h-align-right',
+					),
+				),
+				'condition' => array(
+					'enable_enquiry_btn'  => 'yes',
+					'enquiry_icon_enable' => 'yes',
+				),
+			)
+		);
+
+		$this->add_control(
+			'enquiry_icon_size',
+			array(
+				'label'      => __( 'Icon Size', 'stc-product-showcase-pro' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array( 'px' => array( 'min' => 8, 'max' => 48 ) ),
+				'default'    => array( 'size' => 16, 'unit' => 'px' ),
+				'condition'  => array(
+					'enable_enquiry_btn'  => 'yes',
+					'enquiry_icon_enable' => 'yes',
+				),
+			)
+		);
+
+		$this->add_control(
+			'enquiry_icon_color',
+			array(
+				'label'     => __( 'Icon Color', 'stc-product-showcase-pro' ),
+				'type'      => Controls_Manager::COLOR,
+				'condition' => array(
+					'enable_enquiry_btn'  => 'yes',
+					'enquiry_icon_enable' => 'yes',
+				),
+			)
+		);
+
+		$this->add_control(
 			'enquiry_anim',
 			array(
 				'label'     => __( 'Enquire Animation', 'stc-product-showcase-pro' ),
@@ -654,6 +876,31 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 				'default'   => 'none',
 				'options'   => $this->animation_options(),
 				'condition' => array( 'enable_download_btn' => 'yes' ),
+			)
+		);
+
+		$this->add_control(
+			'download_fallback',
+			array(
+				'label'        => __( 'Show Fallback When No Catalogue', 'stc-product-showcase-pro' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => '',
+				'description'  => __( 'When off, the button is simply hidden if the product has no catalogue.', 'stc-product-showcase-pro' ),
+				'condition'    => array( 'enable_download_btn' => 'yes' ),
+			)
+		);
+
+		$this->add_control(
+			'download_fallback_text',
+			array(
+				'label'     => __( 'Fallback Text', 'stc-product-showcase-pro' ),
+				'type'      => Controls_Manager::TEXT,
+				'default'   => __( 'No catalogue available', 'stc-product-showcase-pro' ),
+				'condition' => array(
+					'enable_download_btn' => 'yes',
+					'download_fallback'   => 'yes',
+				),
 			)
 		);
 
@@ -866,8 +1113,26 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 			return;
 		}
 
-		$settings = $this->get_settings_for_display();
+		$settings  = $this->get_settings_for_display();
 		$widget_id = $this->get_id();
+		$mode      = (string) ( $settings['content_mode'] ?? 'query' );
+
+		// Manual repeater mode: render the curated product list (no pagination).
+		if ( 'repeater' === $mode ) {
+			$items = is_array( $settings['products'] ?? null ) ? $settings['products'] : array();
+			$html  = STC_PSP_Renderer::render_repeater( $items, $settings );
+			?>
+			<div class="stc-psp-wrapper stc-psp-mode-repeater">
+				<div class="stc-psp-grid">
+					<?php echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
+				<?php if ( '' === trim( $html ) ) : ?>
+					<p class="stc-psp-empty"><?php esc_html_e( 'No products added. Add items in the Products tab.', 'stc-product-showcase-pro' ); ?></p>
+				<?php endif; ?>
+			</div>
+			<?php
+			return;
+		}
 
 		$query = STC_PSP_Query::run( $settings, 1 );
 
@@ -943,12 +1208,15 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 			'per_page', 'orderby', 'order', 'hide_out_of_stock', 'layout',
 			'image_aspect', 'image_fit', 'image_hover',
 			'show_image', 'show_name', 'show_sku', 'show_brand', 'show_category',
-			'show_description', 'show_features', 'show_price', 'show_rating',
-			'show_tags', 'show_stock',
+			'show_description', 'show_features', 'show_applications', 'show_downloads',
+			'show_price', 'show_rating', 'show_tags', 'show_stock',
 			'desc_limit_type', 'desc_limit', 'enable_read_more', 'read_more_text', 'read_less_text',
 			'features_source', 'features_meta_key', 'features_style', 'features_icon',
 			'enable_enquiry_btn', 'enquiry_button_text', 'enquiry_icon', 'enquiry_anim',
+			'enquiry_icon_enable', 'enquiry_icon_position', 'enquiry_icon_size', 'enquiry_icon_color',
 			'enable_download_btn', 'download_button_text', 'download_anim',
+			'download_fallback', 'download_fallback_text',
+			'enable_custom_order', 'element_order',
 		);
 
 		$out = array();

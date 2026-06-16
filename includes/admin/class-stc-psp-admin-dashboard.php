@@ -22,6 +22,7 @@ class STC_PSP_Admin_Dashboard {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_init', array( $this, 'handle_actions' ) );
 		add_action( 'admin_init', array( $this, 'maybe_export_csv' ) );
+		add_action( 'admin_init', array( $this, 'maybe_export_downloads_csv' ) );
 	}
 
 	/**
@@ -208,9 +209,47 @@ class STC_PSP_Admin_Dashboard {
 		exit;
 	}
 
-	/* ------------------------------------------------------------------ *
-	 * Pages
-	 * ------------------------------------------------------------------ */
+	/**
+	 * Export download records to CSV.
+	 */
+	public function maybe_export_downloads_csv(): void {
+		if ( ! isset( $_GET['stc_action'] ) || 'export_downloads' !== $_GET['stc_action'] ) {
+			return;
+		}
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'stc-product-showcase-pro' ) );
+		}
+		check_admin_referer( 'stc_psp_export_downloads' );
+
+		$rows = STC_PSP_Download_Repository::all();
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=stc-downloads-' . gmdate( 'Y-m-d' ) . '.csv' );
+
+		$out = fopen( 'php://output', 'w' );
+		fputcsv( $out, array( 'ID', 'Date', 'Time', 'Product Name', 'Downloaded File', 'File URL', 'User IP', 'User ID' ) );
+
+		foreach ( $rows as $row ) {
+			$ts = strtotime( (string) $row['created_at'] );
+			fputcsv(
+				$out,
+				array(
+					$row['id'],
+					gmdate( 'Y-m-d', $ts ),
+					gmdate( 'H:i:s', $ts ),
+					$row['product_name'],
+					$row['file_name'],
+					$row['file_url'],
+					$row['ip_address'],
+					$row['user_id'],
+				)
+			);
+		}
+
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
 
 	/**
 	 * Enquiries list / single view page.
@@ -443,24 +482,52 @@ class STC_PSP_Admin_Dashboard {
 		$per_page = 20;
 		$result   = STC_PSP_Download_Repository::query( array( 'page' => $paged, 'per_page' => $per_page ) );
 		$top       = STC_PSP_Download_Repository::top_products( 10 );
+		$top_files = STC_PSP_Download_Repository::top_files( 10 );
 		$pages    = (int) ceil( $result['total'] / $per_page );
+
+		$export_url = wp_nonce_url(
+			add_query_arg( array( 'page' => self::SLUG . '-downloads', 'stc_action' => 'export_downloads' ), admin_url( 'admin.php' ) ),
+			'stc_psp_export_downloads'
+		);
 		?>
 		<div class="wrap stc-psp-admin">
-			<h1><?php esc_html_e( 'Download Tracking', 'stc-product-showcase-pro' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Download Tracking', 'stc-product-showcase-pro' ); ?></h1>
+			<a href="<?php echo esc_url( $export_url ); ?>" class="page-title-action"><?php esc_html_e( 'Export CSV', 'stc-product-showcase-pro' ); ?></a>
+			<hr class="wp-header-end" />
 
-			<h2><?php esc_html_e( 'Top Downloaded Products', 'stc-product-showcase-pro' ); ?></h2>
-			<table class="wp-list-table widefat fixed striped" style="max-width:600px;">
-				<thead><tr><th><?php esc_html_e( 'Product', 'stc-product-showcase-pro' ); ?></th><th><?php esc_html_e( 'Downloads', 'stc-product-showcase-pro' ); ?></th></tr></thead>
-				<tbody>
-					<?php if ( empty( $top ) ) : ?>
-						<tr><td colspan="2"><?php esc_html_e( 'No downloads recorded yet.', 'stc-product-showcase-pro' ); ?></td></tr>
-					<?php else : ?>
-						<?php foreach ( $top as $row ) : ?>
-							<tr><td><?php echo esc_html( $row['product_name'] ); ?></td><td><?php echo esc_html( (string) $row['total'] ); ?></td></tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
-				</tbody>
-			</table>
+			<div class="stc-psp-report-grid" style="display:flex;gap:24px;flex-wrap:wrap;">
+				<div style="flex:1 1 360px;">
+					<h2><?php esc_html_e( 'Top Downloaded Products', 'stc-product-showcase-pro' ); ?></h2>
+					<table class="wp-list-table widefat fixed striped">
+						<thead><tr><th><?php esc_html_e( 'Product', 'stc-product-showcase-pro' ); ?></th><th><?php esc_html_e( 'Downloads', 'stc-product-showcase-pro' ); ?></th></tr></thead>
+						<tbody>
+							<?php if ( empty( $top ) ) : ?>
+								<tr><td colspan="2"><?php esc_html_e( 'No downloads recorded yet.', 'stc-product-showcase-pro' ); ?></td></tr>
+							<?php else : ?>
+								<?php foreach ( $top as $row ) : ?>
+									<tr><td><?php echo esc_html( $row['product_name'] ); ?></td><td><?php echo esc_html( (string) $row['total'] ); ?></td></tr>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</tbody>
+					</table>
+				</div>
+
+				<div style="flex:1 1 360px;">
+					<h2><?php esc_html_e( 'Top Downloaded Catalogues', 'stc-product-showcase-pro' ); ?></h2>
+					<table class="wp-list-table widefat fixed striped">
+						<thead><tr><th><?php esc_html_e( 'File', 'stc-product-showcase-pro' ); ?></th><th><?php esc_html_e( 'Product', 'stc-product-showcase-pro' ); ?></th><th><?php esc_html_e( 'Downloads', 'stc-product-showcase-pro' ); ?></th></tr></thead>
+						<tbody>
+							<?php if ( empty( $top_files ) ) : ?>
+								<tr><td colspan="3"><?php esc_html_e( 'No downloads recorded yet.', 'stc-product-showcase-pro' ); ?></td></tr>
+							<?php else : ?>
+								<?php foreach ( $top_files as $row ) : ?>
+									<tr><td><?php echo esc_html( $row['file_name'] ); ?></td><td><?php echo esc_html( $row['product_name'] ); ?></td><td><?php echo esc_html( (string) $row['total'] ); ?></td></tr>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
 			<h2><?php esc_html_e( 'Recent Downloads', 'stc-product-showcase-pro' ); ?></h2>
 			<table class="wp-list-table widefat fixed striped">

@@ -54,13 +54,116 @@ class STC_PSP_Renderer {
 	}
 
 	/**
-	 * Render a single product card.
+	 * Render cards from the Elementor "Products" repeater (manual mode).
 	 *
-	 * @param WC_Product          $product  Product.
-	 * @param array<string,mixed> $settings Widget settings.
+	 * Each repeater item may override the title, description, features and
+	 * catalogue PDF of the selected product.
+	 *
+	 * @param array<int,array<string,mixed>> $items    Repeater items.
+	 * @param array<string,mixed>            $settings Widget settings.
 	 * @return string
 	 */
-	public static function render_card( WC_Product $product, array $settings ): string {
+	public static function render_repeater( array $items, array $settings ): string {
+		$out = '';
+		foreach ( $items as $item ) {
+			$product_id = absint( $item['rep_product_id'] ?? 0 );
+			if ( ! $product_id ) {
+				continue;
+			}
+			$product = wc_get_product( $product_id );
+			if ( ! $product instanceof WC_Product ) {
+				continue;
+			}
+
+			$features = $item['rep_features'] ?? '';
+			$overrides = array(
+				'title'       => (string) ( $item['rep_title'] ?? '' ),
+				'description' => (string) ( $item['rep_description'] ?? '' ),
+				'features'    => array_values( array_filter( array_map( 'trim', (array) preg_split( '/\r\n|\r|\n/', (string) $features ) ) ) ),
+				'pdf_url'     => (string) ( ( $item['rep_pdf'] ?? array() )['url'] ?? '' ),
+			);
+
+			$out .= self::render_card( $product, $settings, $overrides );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Default body element render order.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function element_keys(): array {
+		return array( 'brand', 'category', 'name', 'sku', 'rating', 'description', 'features', 'applications', 'tags', 'footer', 'downloads' );
+	}
+
+	/**
+	 * Human labels for the element ordering control.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function element_labels(): array {
+		return array(
+			'brand'        => __( 'Brand', 'stc-product-showcase-pro' ),
+			'category'     => __( 'Category', 'stc-product-showcase-pro' ),
+			'name'         => __( 'Product Name', 'stc-product-showcase-pro' ),
+			'sku'          => __( 'SKU', 'stc-product-showcase-pro' ),
+			'rating'       => __( 'Rating', 'stc-product-showcase-pro' ),
+			'description'  => __( 'Description', 'stc-product-showcase-pro' ),
+			'features'     => __( 'Features', 'stc-product-showcase-pro' ),
+			'applications' => __( 'Applications', 'stc-product-showcase-pro' ),
+			'tags'         => __( 'Tags', 'stc-product-showcase-pro' ),
+			'footer'       => __( 'Price + Buttons', 'stc-product-showcase-pro' ),
+			'downloads'    => __( 'Downloads', 'stc-product-showcase-pro' ),
+		);
+	}
+
+	/**
+	 * Resolve the element render order from settings.
+	 *
+	 * @param array<string,mixed> $settings Widget settings.
+	 * @return array<int,string>
+	 */
+	private static function get_element_order( array $settings ): array {
+		$default = self::element_keys();
+
+		if ( ( $settings['enable_custom_order'] ?? '' ) !== 'yes' ) {
+			return $default;
+		}
+
+		$repeater = $settings['element_order'] ?? array();
+		if ( ! is_array( $repeater ) || empty( $repeater ) ) {
+			return $default;
+		}
+
+		$order = array();
+		foreach ( $repeater as $row ) {
+			$el = is_array( $row ) ? (string) ( $row['element'] ?? '' ) : (string) $row;
+			if ( $el && in_array( $el, $default, true ) && ! in_array( $el, $order, true ) ) {
+				$order[] = $el;
+			}
+		}
+
+		// Append any elements not explicitly ordered so nothing disappears.
+		foreach ( $default as $el ) {
+			if ( ! in_array( $el, $order, true ) ) {
+				$order[] = $el;
+			}
+		}
+
+		return $order ?: $default;
+	}
+
+	/**
+	 * Render a single product card.
+	 *
+	 * @param WC_Product          $product   Product.
+	 * @param array<string,mixed> $settings  Widget settings.
+	 * @param array<string,mixed> $overrides Optional per-item overrides (title, description, features, pdf_url).
+	 * @return string
+	 */
+	public static function render_card( WC_Product $product, array $settings, array $overrides = array() ): string {
 		$layout     = (string) ( $settings['layout'] ?? 'layout-1' );
 		$product_id = $product->get_id();
 		$show       = static fn( string $key ): bool => ! isset( $settings[ $key ] ) || 'yes' === $settings[ $key ];
@@ -68,6 +171,78 @@ class STC_PSP_Renderer {
 		$aspect    = sanitize_html_class( (string) ( $settings['image_aspect'] ?? 'ratio-4-3' ) );
 		$objectfit = sanitize_html_class( (string) ( $settings['image_fit'] ?? 'cover' ) );
 		$hover     = sanitize_html_class( (string) ( $settings['image_hover'] ?? 'zoom' ) );
+
+		// Build each body block keyed by element name, then output by order.
+		$blocks = array();
+
+		if ( $show( 'show_brand' ) ) {
+			$brand = STC_PSP_Product_Meta::get_brand( $product_id );
+			if ( $brand ) {
+				$blocks['brand'] = '<div class="stc-psp-brand">' . esc_html( $brand ) . '</div>';
+			}
+		}
+
+		if ( $show( 'show_category' ) ) {
+			$cats = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'names' ) );
+			$cats = is_wp_error( $cats ) ? array() : $cats;
+			if ( ! empty( $cats ) ) {
+				$blocks['category'] = '<div class="stc-psp-category">' . esc_html( implode( ', ', $cats ) ) . '</div>';
+			}
+		}
+
+		if ( $show( 'show_name' ) ) {
+			$title = '' !== (string) ( $overrides['title'] ?? '' ) ? (string) $overrides['title'] : $product->get_name();
+			$blocks['name'] = '<h3 class="stc-psp-title"><a href="' . esc_url( get_permalink( $product_id ) ) . '">' . esc_html( $title ) . '</a></h3>';
+		}
+
+		if ( $show( 'show_sku' ) && $product->get_sku() ) {
+			$blocks['sku'] = '<div class="stc-psp-sku"><span>' . esc_html__( 'SKU:', 'stc-product-showcase-pro' ) . '</span> ' . esc_html( $product->get_sku() ) . '</div>';
+		}
+
+		if ( $show( 'show_rating' ) && function_exists( 'wc_review_ratings_enabled' ) && wc_review_ratings_enabled() ) {
+			$blocks['rating'] = '<div class="stc-psp-rating">' . wp_kses_post( wc_get_rating_html( (float) $product->get_average_rating(), (int) $product->get_rating_count() ) ) . '</div>';
+		}
+
+		if ( $show( 'show_description' ) ) {
+			$blocks['description'] = self::render_description( $product, $settings, (string) ( $overrides['description'] ?? '' ) );
+		}
+
+		if ( $show( 'show_features' ) ) {
+			$blocks['features'] = self::render_features( $product_id, $settings, (array) ( $overrides['features'] ?? array() ) );
+		}
+
+		if ( $show( 'show_applications' ) && ( $settings['show_applications'] ?? '' ) === 'yes' ) {
+			$blocks['applications'] = self::render_applications( $product_id );
+		}
+
+		if ( $show( 'show_tags' ) ) {
+			$tags = wp_get_post_terms( $product_id, 'product_tag', array( 'fields' => 'names' ) );
+			$tags = is_wp_error( $tags ) ? array() : $tags;
+			if ( ! empty( $tags ) ) {
+				$tag_html = '<div class="stc-psp-tags">';
+				foreach ( $tags as $tag ) {
+					$tag_html .= '<span class="stc-psp-tag">' . esc_html( $tag ) . '</span>';
+				}
+				$tag_html .= '</div>';
+				$blocks['tags'] = $tag_html;
+			}
+		}
+
+		// Footer: price + action buttons.
+		$footer  = '<div class="stc-psp-card-footer">';
+		if ( $show( 'show_price' ) && $product->get_price_html() ) {
+			$footer .= '<div class="stc-psp-price">' . wp_kses_post( $product->get_price_html() ) . '</div>';
+		}
+		$footer .= '<div class="stc-psp-actions">' . self::render_buttons( $product, $settings, $overrides ) . '</div>';
+		$footer .= '</div>';
+		$blocks['footer'] = $footer;
+
+		// Multiple downloads block.
+		if ( ( $settings['show_downloads'] ?? '' ) === 'yes' ) {
+			$blocks['downloads'] = self::render_downloads_list( $product, $settings );
+		}
+
+		$order = self::get_element_order( $settings );
 
 		ob_start();
 		?>
@@ -90,74 +265,40 @@ class STC_PSP_Renderer {
 			<?php endif; ?>
 
 			<div class="stc-psp-card-body">
-
-				<?php if ( $show( 'show_brand' ) ) : ?>
-					<?php $brand = STC_PSP_Product_Meta::get_brand( $product_id ); ?>
-					<?php if ( $brand ) : ?>
-						<div class="stc-psp-brand"><?php echo esc_html( $brand ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_category' ) ) : ?>
-					<?php
-					$cats = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'names' ) );
-					$cats = is_wp_error( $cats ) ? array() : $cats;
-					?>
-					<?php if ( ! empty( $cats ) ) : ?>
-						<div class="stc-psp-category"><?php echo esc_html( implode( ', ', $cats ) ); ?></div>
-					<?php endif; ?>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_name' ) ) : ?>
-					<h3 class="stc-psp-title">
-						<a href="<?php echo esc_url( get_permalink( $product_id ) ); ?>"><?php echo esc_html( $product->get_name() ); ?></a>
-					</h3>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_sku' ) && $product->get_sku() ) : ?>
-					<div class="stc-psp-sku"><span><?php esc_html_e( 'SKU:', 'stc-product-showcase-pro' ); ?></span> <?php echo esc_html( $product->get_sku() ); ?></div>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_rating' ) && wc_review_ratings_enabled() ) : ?>
-					<div class="stc-psp-rating"><?php echo wp_kses_post( wc_get_rating_html( (float) $product->get_average_rating(), (int) $product->get_rating_count() ) ); ?></div>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_description' ) ) : ?>
-					<?php echo self::render_description( $product, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_features' ) ) : ?>
-					<?php echo self::render_features( $product_id, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<?php endif; ?>
-
-				<?php if ( $show( 'show_tags' ) ) : ?>
-					<?php
-					$tags = wp_get_post_terms( $product_id, 'product_tag', array( 'fields' => 'names' ) );
-					$tags = is_wp_error( $tags ) ? array() : $tags;
-					?>
-					<?php if ( ! empty( $tags ) ) : ?>
-						<div class="stc-psp-tags">
-							<?php foreach ( $tags as $tag ) : ?>
-								<span class="stc-psp-tag"><?php echo esc_html( $tag ); ?></span>
-							<?php endforeach; ?>
-						</div>
-					<?php endif; ?>
-				<?php endif; ?>
-
-				<div class="stc-psp-card-footer">
-					<?php if ( $show( 'show_price' ) && $product->get_price_html() ) : ?>
-						<div class="stc-psp-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></div>
-					<?php endif; ?>
-
-					<div class="stc-psp-actions">
-						<?php echo self::render_buttons( $product, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					</div>
-				</div>
-
+				<?php
+				foreach ( $order as $key ) {
+					if ( ! empty( $blocks[ $key ] ) ) {
+						echo $blocks[ $key ]; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+				}
+				?>
 			</div>
 		</article>
 		<?php
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Render the Applications block.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return string
+	 */
+	private static function render_applications( int $product_id ): string {
+		$items = STC_PSP_Product_Meta::get_lines( $product_id, 'applications' );
+		if ( empty( $items ) ) {
+			return '';
+		}
+
+		$out  = '<div class="stc-psp-applications">';
+		$out .= '<div class="stc-psp-block-title">' . esc_html__( 'Applications', 'stc-product-showcase-pro' ) . '</div>';
+		$out .= '<ul>';
+		foreach ( $items as $item ) {
+			$out .= '<li>' . esc_html( $item ) . '</li>';
+		}
+		$out .= '</ul></div>';
+
+		return $out;
 	}
 
 	/**
@@ -167,10 +308,14 @@ class STC_PSP_Renderer {
 	 * @param array<string,mixed> $settings Widget settings.
 	 * @return string
 	 */
-	private static function render_description( WC_Product $product, array $settings ): string {
-		$raw = $product->get_short_description();
-		if ( '' === trim( (string) $raw ) ) {
-			$raw = wp_trim_words( (string) $product->get_description(), 60 );
+	private static function render_description( WC_Product $product, array $settings, string $override = '' ): string {
+		if ( '' !== trim( $override ) ) {
+			$raw = $override;
+		} else {
+			$raw = $product->get_short_description();
+			if ( '' === trim( (string) $raw ) ) {
+				$raw = wp_trim_words( (string) $product->get_description(), 60 );
+			}
 		}
 		$text = wp_strip_all_tags( (string) $raw );
 		if ( '' === $text ) {
@@ -229,13 +374,16 @@ class STC_PSP_Renderer {
 	 * @param array<string,mixed> $settings   Widget settings.
 	 * @return string
 	 */
-	private static function render_features( int $product_id, array $settings ): string {
+	private static function render_features( int $product_id, array $settings, array $override = array() ): string {
 		$source = (string) ( $settings['features_source'] ?? 'woocommerce' );
 		$style  = sanitize_html_class( (string) ( $settings['features_style'] ?? 'checkmark' ) );
 
 		$items = array();
 
-		switch ( $source ) {
+		if ( ! empty( $override ) ) {
+			$items = $override;
+		} else {
+			switch ( $source ) {
 			case 'custom_field':
 				$field = (string) ( $settings['features_meta_key'] ?? '_stc_psp_features' );
 				$raw   = (string) get_post_meta( $product_id, $field, true );
@@ -260,6 +408,7 @@ class STC_PSP_Renderer {
 			default:
 				$items = STC_PSP_Product_Meta::get_lines( $product_id, 'features' );
 				break;
+			}
 		}
 
 		$items = array_filter( $items );
@@ -287,11 +436,12 @@ class STC_PSP_Renderer {
 	/**
 	 * Render the action buttons (Enquire Now + Download Catalogue).
 	 *
-	 * @param WC_Product          $product  Product.
-	 * @param array<string,mixed> $settings Widget settings.
+	 * @param WC_Product          $product   Product.
+	 * @param array<string,mixed> $settings  Widget settings.
+	 * @param array<string,mixed> $overrides Optional per-item overrides (pdf_url).
 	 * @return string
 	 */
-	private static function render_buttons( WC_Product $product, array $settings ): string {
+	private static function render_buttons( WC_Product $product, array $settings, array $overrides = array() ): string {
 		$product_id = $product->get_id();
 		$out        = '';
 
@@ -301,21 +451,78 @@ class STC_PSP_Renderer {
 			$out .= STC_PSP_Enquiry_System::render_enquiry_button(
 				$product_id,
 				array(
-					'text'  => (string) ( $settings['enquiry_button_text'] ?? STC_PSP_Settings::get( 'enquiry_button_text' ) ),
-					'class' => 'stc-psp-btn stc-psp-btn-enquire stc-psp-anim-' . $anim,
-					'icon'  => (string) ( $settings['enquiry_icon'] ?? 'dashicons dashicons-email-alt' ),
+					'text'          => (string) ( $settings['enquiry_button_text'] ?? STC_PSP_Settings::get( 'enquiry_button_text' ) ),
+					'class'         => 'stc-psp-btn stc-psp-btn-enquire stc-psp-anim-' . $anim,
+					'icon'          => (string) ( $settings['enquiry_icon'] ?? 'dashicons dashicons-email-alt' ),
+					'icon_enabled'  => ! isset( $settings['enquiry_icon_enable'] ) || 'yes' === $settings['enquiry_icon_enable'],
+					'icon_position' => (string) ( $settings['enquiry_icon_position'] ?? 'left' ),
+					'icon_size'     => self::slider_size( $settings['enquiry_icon_size'] ?? null ),
+					'icon_color'    => (string) ( $settings['enquiry_icon_color'] ?? '' ),
 				)
 			);
 		}
 
-		// Download Catalogue button.
+		// Download Catalogue button (auto-show / auto-hide).
 		$enable_download = empty( $settings['enable_download_btn'] ) || 'yes' === $settings['enable_download_btn'];
 		if ( $enable_download ) {
-			$pdf = STC_PSP_Product_Meta::get_pdf_url( $product_id );
+			$pdf = '' !== (string) ( $overrides['pdf_url'] ?? '' )
+				? (string) $overrides['pdf_url']
+				: STC_PSP_Product_Meta::get_pdf_url( $product_id );
+
 			if ( $pdf ) {
 				$out .= self::render_download_button( $product, $pdf, $settings );
+			} elseif ( ( $settings['download_fallback'] ?? '' ) === 'yes' ) {
+				$msg  = (string) ( $settings['download_fallback_text'] ?? __( 'No catalogue available', 'stc-product-showcase-pro' ) );
+				$out .= '<span class="stc-psp-no-catalogue">' . esc_html( $msg ) . '</span>';
 			}
 		}
+
+		return $out;
+	}
+
+	/**
+	 * Extract a pixel size from an Elementor slider value.
+	 *
+	 * @param mixed $value Slider value.
+	 * @return int
+	 */
+	private static function slider_size( $value ): int {
+		if ( is_array( $value ) && isset( $value['size'] ) ) {
+			return (int) $value['size'];
+		}
+
+		return is_numeric( $value ) ? (int) $value : 0;
+	}
+
+	/**
+	 * Render the list of additional downloads (datasheet, brochure, certificate…).
+	 *
+	 * @param WC_Product          $product  Product.
+	 * @param array<string,mixed> $settings Widget settings.
+	 * @return string
+	 */
+	private static function render_downloads_list( WC_Product $product, array $settings ): string {
+		$downloads = STC_PSP_Product_Meta::get_downloads( $product->get_id() );
+		if ( empty( $downloads ) ) {
+			return '';
+		}
+
+		$new_tab = 'yes' === STC_PSP_Settings::get( 'open_new_tab', 'yes' );
+		$track   = 'yes' === STC_PSP_Settings::get( 'track_downloads', 'yes' );
+
+		$out = '<div class="stc-psp-downloads">';
+		foreach ( $downloads as $row ) {
+			$out .= sprintf(
+				'<a class="stc-psp-btn stc-psp-btn-download" href="%1$s" data-product-id="%2$s" data-product-name="%3$s" data-track="%4$s" %5$s><i class="stc-psp-btn-icon dashicons dashicons-media-document" aria-hidden="true"></i><span class="stc-psp-btn-text">%6$s</span></a>',
+				esc_url( $row['url'] ),
+				esc_attr( (string) $product->get_id() ),
+				esc_attr( $product->get_name() ),
+				esc_attr( $track ? '1' : '0' ),
+				$new_tab ? 'target="_blank" rel="noopener"' : 'download',
+				esc_html( $row['label'] )
+			);
+		}
+		$out .= '</div>';
 
 		return $out;
 	}

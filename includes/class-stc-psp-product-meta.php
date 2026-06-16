@@ -33,6 +33,7 @@ class STC_PSP_Product_Meta {
 		'applications'   => '_stc_psp_applications',
 		'industries'     => '_stc_psp_industries',
 		'downloads'      => '_stc_psp_downloads',
+		'downloads_files' => '_stc_psp_downloads_files',
 		'certificates'   => '_stc_psp_certificates',
 		'approvals'      => '_stc_psp_approvals',
 		'download_count' => '_stc_psp_download_count',
@@ -66,6 +67,88 @@ class STC_PSP_Product_Meta {
 			'product',
 			'normal',
 			'high'
+		);
+
+		add_meta_box(
+			'stc_psp_downloads_files',
+			__( 'STC – Product Downloads (Catalogue, Datasheet, Specs…)', 'stc-product-showcase-pro' ),
+			array( $this, 'render_downloads_box' ),
+			'product',
+			'normal',
+			'default'
+		);
+	}
+
+	/**
+	 * Render the multiple-downloads repeater meta box.
+	 *
+	 * Admins can attach unlimited files (Catalogue PDF, Datasheet, Technical
+	 * Specifications, Brochure, Certificates …) per product.
+	 *
+	 * @param WP_Post $post Current product post.
+	 */
+	public function render_downloads_box( $post ): void {
+		$rows = self::get_downloads( $post->ID );
+		if ( empty( $rows ) ) {
+			$rows = array( array( 'label' => '', 'type' => 'catalogue', 'url' => '', 'id' => 0 ) );
+		}
+
+		$types = self::download_types();
+		?>
+		<div class="stc-psp-downloads-repeater" data-next-index="<?php echo esc_attr( (string) count( $rows ) ); ?>">
+			<p class="description"><?php esc_html_e( 'Add unlimited downloadable files. The first Catalogue type is used by the main "Download Catalogue" button if no dedicated Catalogue PDF is set.', 'stc-product-showcase-pro' ); ?></p>
+			<div class="stc-psp-dl-rows">
+				<?php foreach ( $rows as $i => $row ) : ?>
+					<?php $this->render_download_row( (int) $i, $row, $types ); ?>
+				<?php endforeach; ?>
+			</div>
+			<button type="button" class="button stc-psp-dl-add"><?php esc_html_e( '+ Add Download', 'stc-product-showcase-pro' ); ?></button>
+
+			<script type="text/template" id="stc-psp-dl-template">
+				<?php $this->render_download_row( '__INDEX__', array( 'label' => '', 'type' => 'datasheet', 'url' => '', 'id' => 0 ), $types ); ?>
+			</script>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render one repeater row for the downloads meta box.
+	 *
+	 * @param int|string           $i     Row index.
+	 * @param array<string,mixed>  $row   Row data.
+	 * @param array<string,string> $types Download types.
+	 */
+	private function render_download_row( $i, array $row, array $types ): void {
+		$base = 'stc_psp_dl[' . $i . ']';
+		?>
+		<div class="stc-psp-dl-row" data-index="<?php echo esc_attr( (string) $i ); ?>" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+			<input type="text" name="<?php echo esc_attr( $base ); ?>[label]" value="<?php echo esc_attr( (string) ( $row['label'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'Label (e.g. Datasheet)', 'stc-product-showcase-pro' ); ?>" style="flex:1 1 160px;" />
+			<select name="<?php echo esc_attr( $base ); ?>[type]" style="flex:0 0 150px;">
+				<?php foreach ( $types as $val => $label ) : ?>
+					<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $row['type'] ?? 'catalogue', $val ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<input type="text" name="<?php echo esc_attr( $base ); ?>[url]" value="<?php echo esc_attr( (string) ( $row['url'] ?? '' ) ); ?>" placeholder="<?php esc_attr_e( 'File URL', 'stc-product-showcase-pro' ); ?>" class="stc-psp-dl-url" style="flex:2 1 240px;" />
+			<input type="hidden" name="<?php echo esc_attr( $base ); ?>[id]" value="<?php echo esc_attr( (string) ( $row['id'] ?? 0 ) ); ?>" class="stc-psp-dl-id" />
+			<button type="button" class="button stc-psp-dl-select"><?php esc_html_e( 'Media', 'stc-product-showcase-pro' ); ?></button>
+			<button type="button" class="button stc-psp-dl-remove" title="<?php esc_attr_e( 'Remove', 'stc-product-showcase-pro' ); ?>">&times;</button>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Supported download types.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function download_types(): array {
+		return array(
+			'catalogue'    => __( 'Catalogue', 'stc-product-showcase-pro' ),
+			'datasheet'    => __( 'Datasheet', 'stc-product-showcase-pro' ),
+			'specs'        => __( 'Technical Specifications', 'stc-product-showcase-pro' ),
+			'brochure'     => __( 'Brochure', 'stc-product-showcase-pro' ),
+			'certificate'  => __( 'Certificate', 'stc-product-showcase-pro' ),
+			'other'        => __( 'Other', 'stc-product-showcase-pro' ),
 		);
 	}
 
@@ -207,6 +290,46 @@ class STC_PSP_Product_Meta {
 				update_post_meta( $post_id, self::META[ $key ], sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
+
+		// Multiple downloads repeater.
+		$this->save_downloads( $post_id );
+	}
+
+	/**
+	 * Sanitise and persist the downloads repeater.
+	 *
+	 * @param int $post_id Product ID.
+	 */
+	private function save_downloads( int $post_id ): void {
+		if ( ! isset( $_POST['stc_psp_dl'] ) || ! is_array( $_POST['stc_psp_dl'] ) ) {
+			// Field group absent (e.g. quick edit) — leave existing value intact.
+			return;
+		}
+
+		$raw   = wp_unslash( $_POST['stc_psp_dl'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$types = array_keys( self::download_types() );
+		$clean = array();
+
+		foreach ( (array) $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$url = isset( $row['url'] ) ? esc_url_raw( (string) $row['url'] ) : '';
+			$id  = isset( $row['id'] ) ? absint( $row['id'] ) : 0;
+			if ( '' === $url && 0 === $id ) {
+				continue; // Skip empty rows.
+			}
+			$type = isset( $row['type'] ) && in_array( $row['type'], $types, true ) ? $row['type'] : 'other';
+
+			$clean[] = array(
+				'label' => sanitize_text_field( (string) ( $row['label'] ?? '' ) ),
+				'type'  => $type,
+				'url'   => $url,
+				'id'    => $id,
+			);
+		}
+
+		update_post_meta( $post_id, self::META['downloads_files'], $clean );
 	}
 
 	/* ---------------------------------------------------------------------
@@ -233,7 +356,57 @@ class STC_PSP_Product_Meta {
 			}
 		}
 
+		// Fallback: first "catalogue" type entry from the downloads repeater.
+		foreach ( self::get_downloads( $product_id ) as $row ) {
+			if ( 'catalogue' === ( $row['type'] ?? '' ) && ! empty( $row['url'] ) ) {
+				return (string) $row['url'];
+			}
+		}
+
 		return '';
+	}
+
+	/**
+	 * Get the list of downloadable files for a product, resolving media IDs.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return array<int,array{label:string,type:string,url:string,id:int}>
+	 */
+	public static function get_downloads( int $product_id ): array {
+		$rows = get_post_meta( $product_id, self::META['downloads_files'], true );
+		if ( ! is_array( $rows ) ) {
+			return array();
+		}
+
+		$types  = self::download_types();
+		$out    = array();
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$url = (string) ( $row['url'] ?? '' );
+			$id  = (int) ( $row['id'] ?? 0 );
+			if ( '' === $url && $id ) {
+				$url = (string) wp_get_attachment_url( $id );
+			}
+			if ( '' === $url ) {
+				continue;
+			}
+			$type  = (string) ( $row['type'] ?? 'other' );
+			$label = (string) ( $row['label'] ?? '' );
+			if ( '' === $label ) {
+				$label = $types[ $type ] ?? __( 'Download', 'stc-product-showcase-pro' );
+			}
+
+			$out[] = array(
+				'label' => $label,
+				'type'  => $type,
+				'url'   => $url,
+				'id'    => $id,
+			);
+		}
+
+		return $out;
 	}
 
 	/**
