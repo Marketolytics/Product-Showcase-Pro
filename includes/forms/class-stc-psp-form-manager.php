@@ -285,12 +285,56 @@ class STC_PSP_Form_Manager {
 		?>
 		<div class="stc-psp-popup-overlay" id="stc-psp-popup" aria-hidden="true">
 			<div class="stc-psp-popup" role="dialog" aria-modal="true" aria-labelledby="stc-psp-popup-title">
-				<button type="button" class="stc-psp-popup-close" aria-label="<?php esc_attr_e( 'Close', 'stc-product-showcase-pro' ); ?>">&times;</button>
+				<button type="button" class="stc-psp-popup-close" aria-label="<?php esc_attr_e( 'Close', 'stc-product-showcase-pro' ); ?>" style="<?php echo esc_attr( self::close_button_inline_style() ); ?>">&times;</button>
 				<h3 class="stc-psp-popup-title" id="stc-psp-popup-title"><?php echo esc_html( STC_PSP_Settings::get( 'popup_title', __( 'Product Enquiry', 'stc-product-showcase-pro' ) ) ); ?></h3>
 				<div class="stc-psp-popup-product"></div>
 				<?php echo self::render_form(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Inline, !important close-button styles.
+	 *
+	 * Inline `!important` declarations have the highest CSS priority and beat
+	 * even aggressive theme rules (which otherwise render the button as a large
+	 * coloured box overlapping the title). Kept small and pinned top-right.
+	 *
+	 * @return string
+	 */
+	public static function close_button_inline_style(): string {
+		return implode(
+			'',
+			array(
+				'position:absolute !important;',
+				'top:12px !important;',
+				'right:12px !important;',
+				'left:auto !important;',
+				'z-index:10 !important;',
+				'width:30px !important;',
+				'height:30px !important;',
+				'min-width:30px !important;',
+				'max-width:30px !important;',
+				'min-height:30px !important;',
+				'padding:0 !important;',
+				'margin:0 !important;',
+				'display:flex !important;',
+				'align-items:center !important;',
+				'justify-content:center !important;',
+				'font-size:18px !important;',
+				'line-height:1 !important;',
+				'color:#555 !important;',
+				'background:#f1f3f6 !important;',
+				'background-image:none !important;',
+				'border:1px solid #e0e4ea !important;',
+				'border-radius:50% !important;',
+				'box-shadow:none !important;',
+				'box-sizing:border-box !important;',
+				'-webkit-appearance:none !important;',
+				'appearance:none !important;',
+				'cursor:pointer !important;',
+			)
+		);
 	}
 }

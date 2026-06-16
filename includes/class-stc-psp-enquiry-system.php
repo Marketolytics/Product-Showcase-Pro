@@ -118,6 +118,8 @@ class STC_PSP_Enquiry_System {
 			$icon_style .= 'color:' . $icon_color . ';';
 		}
 
+		$icon_html = $icon_enabled ? self::render_icon_markup( $icon, $icon_style ) : '';
+
 		ob_start();
 		?>
 		<button type="button"
@@ -127,12 +129,49 @@ class STC_PSP_Enquiry_System {
 			data-product-sku="<?php echo esc_attr( $payload['product_sku'] ); ?>"
 			data-product-category="<?php echo esc_attr( $payload['product_category'] ); ?>"
 			data-product-url="<?php echo esc_url( $payload['product_url'] ); ?>">
-			<?php if ( $icon_enabled && $icon ) : ?>
-				<i class="stc-psp-btn-icon <?php echo esc_attr( $icon ); ?>" style="<?php echo esc_attr( $icon_style ); ?>" aria-hidden="true"></i>
-			<?php endif; ?>
+			<?php echo $icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<span class="stc-psp-btn-text"><?php echo esc_html( $text ); ?></span>
 		</button>
 		<?php
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Render an icon for a button, supporting both the Elementor ICONS control
+	 * value (Font Awesome / SVG) and a legacy icon class string.
+	 *
+	 * @param mixed  $icon  Icon value (array from ICONS control or class string).
+	 * @param string $style Inline style applied to the wrapper.
+	 * @return string
+	 */
+	public static function render_icon_markup( $icon, string $style = '' ): string {
+		$wrapper_open  = '<span class="stc-psp-btn-icon" style="' . esc_attr( $style ) . '" aria-hidden="true">';
+		$wrapper_close = '</span>';
+
+		// Elementor ICONS control value: array( 'value' => ..., 'library' => ... ).
+		if ( is_array( $icon ) ) {
+			if ( empty( $icon['value'] ) ) {
+				return '';
+			}
+
+			if ( class_exists( '\Elementor\Icons_Manager' ) ) {
+				ob_start();
+				\Elementor\Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) );
+				$rendered = (string) ob_get_clean();
+				if ( '' !== trim( $rendered ) ) {
+					return $wrapper_open . $rendered . $wrapper_close;
+				}
+			}
+
+			// Fallback: treat value as a class string (e.g. "fas fa-envelope").
+			$icon = is_string( $icon['value'] ) ? $icon['value'] : '';
+		}
+
+		$icon = (string) $icon;
+		if ( '' === trim( $icon ) ) {
+			return '';
+		}
+
+		return '<i class="stc-psp-btn-icon ' . esc_attr( $icon ) . '" style="' . esc_attr( $style ) . '" aria-hidden="true"></i>';
 	}
 }

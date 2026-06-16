@@ -463,7 +463,7 @@ class STC_PSP_Renderer {
 				array(
 					'text'          => (string) ( $settings['enquiry_button_text'] ?? STC_PSP_Settings::get( 'enquiry_button_text' ) ),
 					'class'         => 'stc-psp-btn stc-psp-btn-enquire stc-psp-anim-' . $anim,
-					'icon'          => (string) ( $settings['enquiry_icon'] ?? 'dashicons dashicons-email-alt' ),
+					'icon'          => $settings['enquiry_icon'] ?? 'dashicons dashicons-email-alt',
 					'icon_enabled'  => ! isset( $settings['enquiry_icon_enable'] ) || 'yes' === $settings['enquiry_icon_enable'],
 					'icon_position' => (string) ( $settings['enquiry_icon_position'] ?? 'left' ),
 					'icon_size'     => self::slider_size( $settings['enquiry_icon_size'] ?? null ),

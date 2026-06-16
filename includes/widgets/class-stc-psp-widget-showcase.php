@@ -773,10 +773,14 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 		$this->add_control(
 			'enquiry_icon',
 			array(
-				'label'     => __( 'Enquire Icon Class', 'stc-product-showcase-pro' ),
-				'type'      => Controls_Manager::TEXT,
-				'default'   => 'dashicons dashicons-email-alt',
-				'condition' => array( 'enable_enquiry_btn' => 'yes' ),
+				'label'            => __( 'Enquire Icon', 'stc-product-showcase-pro' ),
+				'type'             => Controls_Manager::ICONS,
+				'default'          => array(
+					'value'   => 'fas fa-envelope',
+					'library' => 'fa-solid',
+				),
+				'fa4compatibility' => 'enquiry_icon_legacy',
+				'condition'        => array( 'enable_enquiry_btn' => 'yes' ),
 			)
 		);
 
