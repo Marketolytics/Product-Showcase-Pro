@@ -50,7 +50,7 @@ class STC_PSP_Settings {
 			'email_cc'             => '',
 			'send_copy_to_user'    => 'no',
 			'from_name'            => get_bloginfo( 'name' ),
-			'from_email'           => get_option( 'admin_email' ),
+			'from_email'           => '',
 
 			// Download options.
 			'track_downloads'      => 'yes',

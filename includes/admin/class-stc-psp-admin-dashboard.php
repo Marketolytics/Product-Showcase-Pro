@@ -108,6 +108,13 @@ class STC_PSP_Admin_Dashboard {
 			$this->redirect_with_notice( self::SLUG, 'updated' );
 		}
 
+		// Send a diagnostic test email.
+		if ( isset( $_POST['stc_psp_send_test'] ) ) {
+			check_admin_referer( 'stc_psp_send_test' );
+			$ok = STC_PSP_Mailer::send_test();
+			$this->redirect_with_notice( self::SLUG . '-settings', $ok ? 'test_sent' : 'test_failed' );
+		}
+
 		// Save template.
 		if ( isset( $_POST['stc_psp_save_template'] ) ) {
 			check_admin_referer( 'stc_psp_save_template' );
@@ -150,13 +157,16 @@ class STC_PSP_Admin_Dashboard {
 			return;
 		}
 		$map = array(
-			'deleted' => __( 'Item deleted.', 'stc-product-showcase-pro' ),
-			'updated' => __( 'Status updated.', 'stc-product-showcase-pro' ),
-			'saved'   => __( 'Saved successfully.', 'stc-product-showcase-pro' ),
+			'deleted'     => __( 'Item deleted.', 'stc-product-showcase-pro' ),
+			'updated'     => __( 'Status updated.', 'stc-product-showcase-pro' ),
+			'saved'       => __( 'Saved successfully.', 'stc-product-showcase-pro' ),
+			'test_sent'   => __( 'Test email sent. Check the recipient inbox (and spam folder).', 'stc-product-showcase-pro' ),
+			'test_failed' => __( 'Test email could NOT be sent. Check the recipient address and consider installing an SMTP plugin.', 'stc-product-showcase-pro' ),
 		);
 		$key = sanitize_key( wp_unslash( $_GET['stc_notice'] ) );
 		if ( isset( $map[ $key ] ) ) {
-			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $map[ $key ] ) );
+			$class = 'test_failed' === $key ? 'notice-error' : 'notice-success';
+			printf( '<div class="notice %s is-dismissible"><p>%s</p></div>', esc_attr( $class ), esc_html( $map[ $key ] ) );
 		}
 	}
 
@@ -641,6 +651,26 @@ class STC_PSP_Admin_Dashboard {
 			</div>
 
 			<?php submit_button(); ?>
+		</form>
+
+		<hr/>
+		<h2><?php esc_html_e( 'Email Diagnostics', 'stc-product-showcase-pro' ); ?></h2>
+		<p class="description">
+			<?php
+			printf(
+				/* translators: 1: recipient list, 2: from address. */
+				esc_html__( 'Notifications are sent to: %1$s — from: %2$s', 'stc-product-showcase-pro' ),
+				'<code>' . esc_html( implode( ', ', STC_PSP_Mailer::recipients() ) ?: '—' ) . '</code>',
+				'<code>' . esc_html( STC_PSP_Mailer::from_email() ) . '</code>'
+			);
+			?>
+		</p>
+		<p class="description" style="max-width:680px;">
+			<?php esc_html_e( 'If test emails do not arrive, your server cannot send mail reliably. Install a free SMTP plugin (e.g. WP Mail SMTP) and connect it to your mailbox — this is the most reliable fix for missing notifications.', 'stc-product-showcase-pro' ); ?>
+		</p>
+		<form method="post">
+			<?php wp_nonce_field( 'stc_psp_send_test' ); ?>
+			<button type="submit" name="stc_psp_send_test" value="1" class="button button-secondary"><?php esc_html_e( 'Send Test Email', 'stc-product-showcase-pro' ); ?></button>
 		</form>
 		</div>
 		<?php
