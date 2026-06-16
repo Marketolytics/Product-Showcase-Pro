@@ -550,6 +550,20 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'enable_product_link',
+			array(
+				'label'        => __( 'Make Product Clickable', 'stc-product-showcase-pro' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'label_on'     => __( 'Yes', 'stc-product-showcase-pro' ),
+				'label_off'    => __( 'No', 'stc-product-showcase-pro' ),
+				'return_value' => 'yes',
+				'default'      => '',
+				'separator'    => 'before',
+				'description'  => __( 'When off, the product image and name do not link to the product page.', 'stc-product-showcase-pro' ),
+			)
+		);
+
 		$this->end_controls_section();
 	}
 
@@ -1206,7 +1220,7 @@ class STC_PSP_Widget_Showcase extends Widget_Base {
 		$keys = array(
 			'source', 'categories', 'brands', 'tags', 'skus', 'product_ids',
 			'per_page', 'orderby', 'order', 'hide_out_of_stock', 'layout',
-			'image_aspect', 'image_fit', 'image_hover',
+			'image_aspect', 'image_fit', 'image_hover', 'enable_product_link',
 			'show_image', 'show_name', 'show_sku', 'show_brand', 'show_category',
 			'show_description', 'show_features', 'show_applications', 'show_downloads',
 			'show_price', 'show_rating', 'show_tags', 'show_stock',
