@@ -40,6 +40,7 @@
 }
 
 .stc-psp-card-media a,
+.stc-psp-card-media .stc-psp-media-inner,
 .stc-psp-card-media img {
 	display: block;
 	width: 100%;
@@ -213,7 +214,20 @@
 	font-size: 16px;
 	width: 1em;
 	height: 1em;
+	vertical-align: middle;
+	flex: 0 0 auto;
 }
+.stc-psp-btn .stc-psp-btn-icon::before,
+.stc-psp-enquire-btn .stc-psp-btn-icon::before {
+	display: block;
+	width: 1em;
+	height: 1em;
+	line-height: 1;
+	font-size: inherit;
+	text-align: center;
+}
+.stc-psp-btn .stc-psp-btn-text,
+.stc-psp-enquire-btn .stc-psp-btn-text { line-height: 1; }
 
 .stc-psp-btn:hover,
 .stc-psp-enquire-btn:hover { background: #08407a; color: #fff; }
@@ -398,44 +412,50 @@
 }
 @keyframes stcPspPop { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* Circular close button — top-right, never overlaps content.
- * Explicit resets defeat theme button styling that can colour/scale it. */
-.stc-psp-popup-close {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-	z-index: 5;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	min-width: 40px;
-	padding: 0;
-	margin: 0;
-	font-size: 22px;
-	line-height: 1;
+/* Circular close button — small, top-right, never overlaps content.
+ * High specificity + !important defeat aggressive theme button styling
+ * (e.g. full-width orange buttons that overlapped the title). */
+.stc-psp-popup .stc-psp-popup-close,
+.stc-psp-popup-overlay .stc-psp-popup-close {
+	position: absolute !important;
+	top: 12px !important;
+	right: 12px !important;
+	z-index: 10 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 30px !important;
+	height: 30px !important;
+	min-width: 30px !important;
+	max-width: 30px !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font-size: 18px !important;
+	font-weight: 400 !important;
+	line-height: 1 !important;
 	cursor: pointer;
-	color: #555;
-	background: #f1f3f6;
-	border: 1px solid #e0e4ea;
-	border-radius: 50%;
-	box-shadow: none;
+	color: #555 !important;
+	background: #f1f3f6 !important;
+	background-image: none !important;
+	border: 1px solid #e0e4ea !important;
+	border-radius: 50% !important;
+	box-shadow: none !important;
+	text-shadow: none !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
 	transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-	-webkit-appearance: none;
-	appearance: none;
 }
-.stc-psp-popup-close:hover,
-.stc-psp-popup-close:focus {
-	background: #c0392b;
-	color: #fff;
-	border-color: #c0392b;
+.stc-psp-popup .stc-psp-popup-close:hover,
+.stc-psp-popup .stc-psp-popup-close:focus {
+	background: #c0392b !important;
+	color: #fff !important;
+	border-color: #c0392b !important;
 	transform: rotate(90deg);
 	outline: none;
 }
 
 /* Reserve room so the title clears the close button. */
-.stc-psp-popup-title { margin: 0 6px 6px 0; padding-right: 52px; font-size: 22px; }
+.stc-psp-popup-title { margin: 0 0 6px; padding-right: 40px; font-size: 22px; }
 .stc-psp-popup-product {
 	font-size: 14px;
 	color: #0b5cab;
@@ -510,13 +530,5 @@
 	}
 
 	.stc-psp-popup { padding: 22px; padding-top: 26px; }
-
-	/* Sticky, always-visible close button on mobile. */
-	.stc-psp-popup-close {
-		position: sticky;
-		top: 10px;
-		float: right;
-		margin: -6px -6px 0 0;
-	}
-	.stc-psp-popup-title { padding-right: 8px; clear: both; }
+	.stc-psp-popup-title { padding-right: 38px; }
 }

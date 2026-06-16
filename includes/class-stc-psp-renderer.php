@@ -172,6 +172,9 @@ class STC_PSP_Renderer {
 		$objectfit = sanitize_html_class( (string) ( $settings['image_fit'] ?? 'cover' ) );
 		$hover     = sanitize_html_class( (string) ( $settings['image_hover'] ?? 'zoom' ) );
 
+		// Whether the product image/title link to the product page.
+		$link_enabled = ( $settings['enable_product_link'] ?? '' ) === 'yes';
+
 		// Build each body block keyed by element name, then output by order.
 		$blocks = array();
 
@@ -192,7 +195,11 @@ class STC_PSP_Renderer {
 
 		if ( $show( 'show_name' ) ) {
 			$title = '' !== (string) ( $overrides['title'] ?? '' ) ? (string) $overrides['title'] : $product->get_name();
-			$blocks['name'] = '<h3 class="stc-psp-title"><a href="' . esc_url( get_permalink( $product_id ) ) . '">' . esc_html( $title ) . '</a></h3>';
+			if ( $link_enabled ) {
+				$blocks['name'] = '<h3 class="stc-psp-title"><a href="' . esc_url( get_permalink( $product_id ) ) . '">' . esc_html( $title ) . '</a></h3>';
+			} else {
+				$blocks['name'] = '<h3 class="stc-psp-title stc-psp-title-nolink">' . esc_html( $title ) . '</h3>';
+			}
 		}
 
 		if ( $show( 'show_sku' ) && $product->get_sku() ) {
@@ -250,12 +257,15 @@ class STC_PSP_Renderer {
 
 			<?php if ( $show( 'show_image' ) ) : ?>
 				<div class="stc-psp-card-media stc-psp-<?php echo esc_attr( $aspect ); ?> stc-psp-fit-<?php echo esc_attr( $objectfit ); ?> stc-psp-hover-<?php echo esc_attr( $hover ); ?>">
-					<a href="<?php echo esc_url( get_permalink( $product_id ) ); ?>" tabindex="-1">
-						<?php
-						$img = $product->get_image( 'woocommerce_single' );
-						echo $img ? wp_kses_post( $img ) : wc_placeholder_img(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						?>
-					</a>
+					<?php
+					$img = $product->get_image( 'woocommerce_single' );
+					$img = $img ? wp_kses_post( $img ) : wc_placeholder_img();
+					if ( $link_enabled ) {
+						echo '<a href="' . esc_url( get_permalink( $product_id ) ) . '" tabindex="-1">' . $img . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					} else {
+						echo '<span class="stc-psp-media-inner">' . $img . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+					?>
 					<?php if ( $show( 'show_stock' ) ) : ?>
 						<span class="stc-psp-stock stc-psp-stock-<?php echo esc_attr( $product->is_in_stock() ? 'in' : 'out' ); ?>">
 							<?php echo esc_html( $product->is_in_stock() ? __( 'In Stock', 'stc-product-showcase-pro' ) : __( 'Out of Stock', 'stc-product-showcase-pro' ) ); ?>
@@ -537,14 +547,12 @@ class STC_PSP_Renderer {
 	 */
 	private static function render_download_button( WC_Product $product, string $pdf_url, array $settings ): string {
 		$new_tab    = 'yes' === STC_PSP_Settings::get( 'open_new_tab', 'yes' );
-		$show_count = 'yes' === STC_PSP_Settings::get( 'show_download_count', 'yes' );
 		$show_size  = 'yes' === STC_PSP_Settings::get( 'show_file_size', 'yes' );
 		$show_icon  = 'yes' === STC_PSP_Settings::get( 'show_pdf_icon', 'yes' );
 		$track      = 'yes' === STC_PSP_Settings::get( 'track_downloads', 'yes' );
 		$text       = (string) ( $settings['download_button_text'] ?? STC_PSP_Settings::get( 'download_button_text' ) );
 		$anim       = sanitize_html_class( (string) ( $settings['download_anim'] ?? 'none' ) );
 
-		$count = $show_count ? STC_PSP_Download_Repository::count_for_product( $product->get_id() ) : 0;
 		$size  = $show_size ? self::pdf_filesize( $product->get_id() ) : '';
 
 		ob_start();
@@ -561,9 +569,6 @@ class STC_PSP_Renderer {
 			<span class="stc-psp-btn-text"><?php echo esc_html( $text ); ?></span>
 			<?php if ( $size ) : ?>
 				<span class="stc-psp-file-size">(<?php echo esc_html( $size ); ?>)</span>
-			<?php endif; ?>
-			<?php if ( $show_count ) : ?>
-				<span class="stc-psp-dl-count" title="<?php esc_attr_e( 'Downloads', 'stc-product-showcase-pro' ); ?>"><?php echo esc_html( (string) $count ); ?></span>
 			<?php endif; ?>
 		</a>
 		<?php

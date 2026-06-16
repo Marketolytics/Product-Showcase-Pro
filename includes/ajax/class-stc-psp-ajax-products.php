@@ -112,6 +112,7 @@ class STC_PSP_Ajax_Products {
 			'show_downloads', 'show_price', 'show_rating', 'show_tags', 'show_stock',
 			'enable_read_more', 'enable_enquiry_btn', 'enable_download_btn',
 			'enquiry_icon_enable', 'download_fallback', 'enable_custom_order',
+			'enable_product_link',
 		);
 		foreach ( $switches as $key ) {
 			if ( isset( $decoded[ $key ] ) ) {

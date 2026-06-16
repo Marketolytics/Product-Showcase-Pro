@@ -628,7 +628,6 @@ class STC_PSP_Admin_Dashboard {
 				<table class="form-table">
 					<?php
 					$this->switch_row( 'track_downloads', __( 'Track Downloads', 'stc-product-showcase-pro' ), $settings );
-					$this->switch_row( 'show_download_count', __( 'Show Download Counter', 'stc-product-showcase-pro' ), $settings );
 					$this->switch_row( 'show_file_size', __( 'Show File Size', 'stc-product-showcase-pro' ), $settings );
 					$this->switch_row( 'show_pdf_icon', __( 'Show PDF Icon', 'stc-product-showcase-pro' ), $settings );
 					$this->switch_row( 'open_new_tab', __( 'Open In New Tab', 'stc-product-showcase-pro' ), $settings );
