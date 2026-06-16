@@ -113,7 +113,8 @@ class STC_PSP_Ajax_Enquiry {
 		}
 
 		$data['id'] = $id;
-		$this->send_emails( $data );
+		$email_sent = STC_PSP_Mailer::send_admin_notification( $data );
+		STC_PSP_Mailer::send_customer_ack( $data );
 
 		/**
 		 * Fires after an enquiry has been stored and notification sent.
@@ -127,110 +128,9 @@ class STC_PSP_Ajax_Enquiry {
 			array(
 				'message'    => STC_PSP_Settings::get( 'popup_success_msg' ),
 				'enquiry_id' => $id,
+				'email_sent' => $email_sent,
 			)
 		);
-	}
-
-	/**
-	 * Send the admin (and optional customer) notification emails.
-	 *
-	 * Uses wp_mail() so it is fully SMTP-plugin compatible.
-	 *
-	 * @param array<string,mixed> $data Enquiry data.
-	 */
-	private function send_emails( array $data ): void {
-		$to      = STC_PSP_Settings::get( 'admin_email', get_option( 'admin_email' ) );
-		$subject = (string) STC_PSP_Settings::get( 'email_subject', __( 'New Product Enquiry', 'stc-product-showcase-pro' ) );
-
-		$from_name  = (string) STC_PSP_Settings::get( 'from_name', get_bloginfo( 'name' ) );
-		$from_email = (string) STC_PSP_Settings::get( 'from_email', get_option( 'admin_email' ) );
-
-		$headers = array(
-			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', $from_name, $from_email ),
-		);
-
-		if ( ! empty( $data['customer_email'] ) && is_email( $data['customer_email'] ) ) {
-			$headers[] = 'Reply-To: ' . $data['customer_email'];
-		}
-
-		$cc = (string) STC_PSP_Settings::get( 'email_cc', '' );
-		if ( '' !== $cc ) {
-			$headers[] = 'Cc: ' . $cc;
-		}
-
-		$body = $this->build_email_body( $data );
-
-		wp_mail( $to, $subject, $body, $headers );
-
-		// Optional acknowledgement to the customer.
-		if ( 'yes' === STC_PSP_Settings::get( 'send_copy_to_user', 'no' )
-			&& ! empty( $data['customer_email'] )
-			&& is_email( $data['customer_email'] ) ) {
-			$ack_subject = sprintf(
-				/* translators: %s: site name. */
-				__( 'We received your enquiry – %s', 'stc-product-showcase-pro' ),
-				get_bloginfo( 'name' )
-			);
-			wp_mail(
-				$data['customer_email'],
-				$ack_subject,
-				$this->build_email_body( $data, true ),
-				array( 'Content-Type: text/html; charset=UTF-8', sprintf( 'From: %s <%s>', $from_name, $from_email ) )
-			);
-		}
-	}
-
-	/**
-	 * Build the HTML email body.
-	 *
-	 * @param array<string,mixed> $data        Enquiry data.
-	 * @param bool                $is_customer Whether this is the customer copy.
-	 * @return string
-	 */
-	private function build_email_body( array $data, bool $is_customer = false ): string {
-		$rows = array(
-			__( 'Product Name', 'stc-product-showcase-pro' ) => $data['product_name'] ?? '',
-			__( 'SKU', 'stc-product-showcase-pro' )          => $data['product_sku'] ?? '',
-			__( 'Category', 'stc-product-showcase-pro' )     => $data['product_category'] ?? '',
-			__( 'Product URL', 'stc-product-showcase-pro' )  => $data['product_url'] ?? '',
-			__( 'Name', 'stc-product-showcase-pro' )         => $data['customer_name'] ?? '',
-			__( 'Email', 'stc-product-showcase-pro' )        => $data['customer_email'] ?? '',
-			__( 'Mobile', 'stc-product-showcase-pro' )       => $data['customer_mobile'] ?? '',
-			__( 'Company', 'stc-product-showcase-pro' )      => $data['customer_company'] ?? '',
-			__( 'City', 'stc-product-showcase-pro' )         => $data['customer_city'] ?? '',
-			__( 'Country', 'stc-product-showcase-pro' )      => $data['customer_country'] ?? '',
-			__( 'Industry', 'stc-product-showcase-pro' )     => $data['customer_industry'] ?? '',
-			__( 'Message', 'stc-product-showcase-pro' )      => $data['message'] ?? '',
-		);
-
-		foreach ( (array) ( $data['extra_fields'] ?? array() ) as $label => $value ) {
-			$rows[ $label ] = $value;
-		}
-
-		$heading = $is_customer
-			? __( 'Thank you for your enquiry', 'stc-product-showcase-pro' )
-			: __( 'New Product Enquiry', 'stc-product-showcase-pro' );
-
-		ob_start();
-		echo '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;">';
-		echo '<h2 style="background:#0b5cab;color:#fff;padding:16px;border-radius:6px 6px 0 0;margin:0;">' . esc_html( $heading ) . '</h2>';
-		echo '<table style="width:100%;border-collapse:collapse;border:1px solid #e2e2e2;">';
-		foreach ( $rows as $label => $value ) {
-			if ( '' === trim( (string) $value ) ) {
-				continue;
-			}
-			printf(
-				'<tr><td style="padding:10px;border:1px solid #e2e2e2;background:#f7f7f7;font-weight:bold;width:35%%;">%s</td><td style="padding:10px;border:1px solid #e2e2e2;">%s</td></tr>',
-				esc_html( (string) $label ),
-				esc_html( (string) $value )
-			);
-		}
-		echo '</table>';
-		echo '<p style="color:#888;font-size:12px;padding:12px;">' . esc_html__( 'Sent by STC Product Showcase Pro', 'stc-product-showcase-pro' ) . '</p>';
-		echo '</div>';
-
-		return (string) ob_get_clean();
 	}
 
 	/**

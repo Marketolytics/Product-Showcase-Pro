@@ -42,6 +42,16 @@ Features:
 
 == Changelog ==
 
+= 1.1.3 =
+* Fixed: Enquiry notification emails not being delivered. The From address now defaults to a domain-aligned address (e.g. wordpress@yoursite.com) so messages pass SPF/DKIM instead of being rejected or sent to spam; a cross-domain From (such as a Gmail address) is automatically replaced.
+* Fixed: Recipient address now always falls back to the WordPress admin email and supports a comma-separated list, so a blank field no longer drops notifications silently.
+* New: "Send Test Email" button and email diagnostics (showing the active recipient and From address) on the Settings → Email tab.
+* Improved: Failed sends are now logged (with WP_DEBUG) and the AJAX response reports whether the email was accepted.
+
+= 1.1.2 =
+* Enquire button icon is now a Font Awesome / SVG icon picker (Elementor ICONS control); icon is flex-centered with the button text.
+* Popup close (cross) button hardened with inline !important styles so themes can no longer enlarge it or overlap the title.
+
 = 1.1.0 =
 * Fixed: Popup close button is now a circular 40x40 button in the top-right (20px offset), with hover effect; sticky and always visible on mobile.
 * Fixed: Enquire button icon alignment using flexbox; added icon enable, position (left/right), size and colour controls.
