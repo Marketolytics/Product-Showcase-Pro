@@ -77,7 +77,7 @@ class STC_PSP_Ajax_Products {
 		$scalar = array(
 			'source', 'orderby', 'order', 'layout', 'image_aspect', 'image_fit',
 			'image_hover', 'desc_limit_type', 'features_source', 'features_meta_key',
-			'features_style', 'features_icon', 'enquiry_button_text', 'enquiry_icon',
+			'features_style', 'features_icon', 'enquiry_button_text',
 			'enquiry_anim', 'download_button_text', 'download_anim', 'read_more_text',
 			'read_less_text', 'skus', 'enquiry_icon_position', 'enquiry_icon_color',
 			'download_fallback_text',
@@ -85,6 +85,19 @@ class STC_PSP_Ajax_Products {
 		foreach ( $scalar as $key ) {
 			if ( isset( $decoded[ $key ] ) && is_scalar( $decoded[ $key ] ) ) {
 				$clean[ $key ] = sanitize_text_field( (string) $decoded[ $key ] );
+			}
+		}
+
+		// Enquire icon: Elementor ICONS control value (array) or legacy class string.
+		if ( isset( $decoded['enquiry_icon'] ) ) {
+			$ico = $decoded['enquiry_icon'];
+			if ( is_array( $ico ) ) {
+				$clean['enquiry_icon'] = array(
+					'value'   => sanitize_text_field( (string) ( $ico['value'] ?? '' ) ),
+					'library' => sanitize_text_field( (string) ( $ico['library'] ?? '' ) ),
+				);
+			} else {
+				$clean['enquiry_icon'] = sanitize_text_field( (string) $ico );
 			}
 		}
 

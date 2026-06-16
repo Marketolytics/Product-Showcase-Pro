@@ -226,6 +226,22 @@
 	font-size: inherit;
 	text-align: center;
 }
+/* Font Awesome <i> / SVG rendered inside the icon wrapper span. */
+.stc-psp-btn-icon i,
+.stc-psp-enquire-btn .stc-psp-btn-icon i {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: inherit;
+	line-height: 1;
+	margin: 0;
+}
+.stc-psp-btn-icon svg {
+	display: block;
+	width: 1em;
+	height: 1em;
+	fill: currentColor;
+}
 .stc-psp-btn .stc-psp-btn-text,
 .stc-psp-enquire-btn .stc-psp-btn-text { line-height: 1; }
 
